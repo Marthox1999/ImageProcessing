@@ -1,4 +1,6 @@
-import os
+#!/usr/local/bin/python
+# This Python file uses the following encoding: utf-8
+import os, sys
 import pydicom
 import numpy
 import math
@@ -122,13 +124,11 @@ def combolutionIgnore(matriz, kernel):
 			newMatrix[i][j]=sumMatrixKernel/sumKernel
 	return newMatrix
 #Usando la libreria pyplot muestra la imagen .dicom
-def showImage():
+def showImage(dicomPixelArray):
 	pyplot.clf()
-	pyplot.imshow(numpy.flipud(dicomPixelArray),cmap=pyplot.cm)
+	pyplot.imshow(dicomPixelArray)
 	pyplot.show()
-#Inserta todicomPixelArray la informacion de la imagen dentro del cuadro de texto de la interfaz
-def loadImage(title, imageInfo):
-	title.insert('end', imageInfo)
+
 #Crea el histograma de una imagen en formato.dicom
 def createHistogram(dicomImage):
 	dicomPixelArray = dicomImage.pixel_array
@@ -146,7 +146,6 @@ def createHistogram(dicomImage):
 	pyplot.show()
 #Permite seleccionar el filtro que se desa ejecutar
 def applyFilter(kernel, filter, dicomPixelArray):
-	global filteredDicomPixelArray
 	if(filter == 1):
 		filteredDicomPixelArray = combolutionIgnore(dicomPixelArray, kernel)
 	if(filter == 2):
@@ -155,6 +154,7 @@ def applyFilter(kernel, filter, dicomPixelArray):
 		filteredDicomPixelArray = combolutionMiror(dicomPixelArray, kernel)
 	else:
 		filteredDicomPixelArray = dicomPixelArray
-def undoFilter(dicomImage):
-	global dicomPixelArray
-	dicomPixelArray = dicomImage.pixel_array
+	return filteredDicomPixelArray
+def undoFilter(dicomPixelArray, filteredDicomPixelArray):
+	filteredDicomPixelArray = dicomPixelArray.pixel_array
+	return dicomPixelArray
