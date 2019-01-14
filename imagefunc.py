@@ -78,6 +78,7 @@ def dicomInfo(dicomImage):
 #y columnas de la imagen original que normamente no se le podria aplicar (bordes)
 
 def combolutionMiror (matriz, kernel):
+	#esto es una prueba
 	return 0	
 
 #Se reduce el tamaño de la imagen en los bordes a los que no se les pudo aplicar 
