@@ -6,6 +6,7 @@ import numpy
 import math
 from matplotlib import pyplot, cm
 
+
 #Recive a dicom file and return the deseable values of the header
 
 def dicomInfo(dicomImage):
@@ -72,15 +73,18 @@ def dicomInfo(dicomImage):
 		fullInfo += "El atributo Spacing Between Slices no esta disponible" + "\n"
 	return fullInfo
 
+#Kernels
+
+def addNewKernel(kernel):
+	kernelarray.append(kernel)
+	
 #Filters
 
 #Refleja la imagen para poder hacer la operacion de combolucion en las filas
 #y columnas de la imagen original que normamente no se le podria aplicar (bordes)
-
 def combolutionMiror (matriz, kernel):
 	#esto es una prueba
 	return 0	
-
 #Se reduce el tamaño de la imagen en los bordes a los que no se les pudo aplicar 
 #la operacion combolucion
 def combolutionReduccion(matriz, kernel):
@@ -129,7 +133,6 @@ def showImage(dicomPixelArray):
 	pyplot.clf()
 	pyplot.imshow(dicomPixelArray)
 	pyplot.show()
-
 #Crea el histograma de una imagen en formato.dicom
 def createHistogram(dicomImage):
 	dicomPixelArray = dicomImage.pixel_array
@@ -148,14 +151,16 @@ def createHistogram(dicomImage):
 #Permite seleccionar el filtro que se desa ejecutar
 def applyFilter(kernel, filter, dicomPixelArray):
 	if(filter == 1):
-		filteredDicomPixelArray = combolutionIgnore(dicomPixelArray, kernel)
+		filteredDicomPixelArray = combolutionIgnore(dicomPixelArray, kernelarray[kernel])
 	if(filter == 2):
-		filteredDicomPixelArray = combolutionReduccion(dicomPixelArray, kernel)
+		filteredDicomPixelArray = combolutionReduccion(dicomPixelArray, kernelarray[kernel])
 	if(filter == 3):
-		filteredDicomPixelArray = combolutionMiror(dicomPixelArray, kernel)
+		filteredDicomPixelArray = combolutionMiror(dicomPixelArray, kernelarray[kernel])
 	else:
 		filteredDicomPixelArray = dicomPixelArray
 	return filteredDicomPixelArray
 def undoFilter(dicomPixelArray, filteredDicomPixelArray):
 	filteredDicomPixelArray = dicomPixelArray.pixel_array
 	return dicomPixelArray
+
+kernelarray = []
