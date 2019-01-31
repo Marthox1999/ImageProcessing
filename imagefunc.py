@@ -82,13 +82,13 @@ def addNewKernel(kernel):
 
 #Refleja la imagen para poder hacer la operacion de combolucion en las filas
 #y columnas de la imagen original que normamente no se le podria aplicar (bordes)
-def combolutionMiror (matriz, kernel):
+def convolutionMirror (matriz, kernel):
 	#esto es una prueba
 	return 0	
 #Se reduce el tamaño de la imagen en los bordes a los que no se les pudo aplicar 
 #la operacion combolucion
-def combolutionReduccion(matriz, kernel):
-	#la diferencia entre este y el combolutionIgnore es que este en vez de ignorar los bordes que no
+def convolutionReduccion(matriz, kernel):
+	#la diferencia entre este y el convolutionIgnore es que este en vez de ignorar los bordes que no
 	#puede afectar los cambia a 0
 	#Prevent the manipulation of the original dicomPixelArraydata
 	numOfRows=len(matriz[0])
@@ -108,7 +108,7 @@ def combolutionReduccion(matriz, kernel):
 			newMatrix[i][j]=sumKernel
 	return newMatrix
 #No se hace ningun cambio sobre los bordes de la imagen
-def combolutionIgnore(matriz, kernel):
+def convolutionIgnore(matriz, kernel):
 	#Prevent the manipulation of the original dicomPixelArraydata
 	newMatrix=matriz
 	numOfRows=len(matriz[0])
@@ -131,7 +131,7 @@ def combolutionIgnore(matriz, kernel):
 #Usando la libreria pyplot muestra la imagen .dicom
 def showImage(dicomPixelArray):
 	pyplot.clf()
-	pyplot.imshow(dicomPixelArray)
+	pyplot.imshow(dicomPixelArray, cmap=pyplot.cm.bone)
 	pyplot.show()
 #Crea el histograma de una imagen en formato.dicom
 def createHistogram(dicomImage):
@@ -149,13 +149,82 @@ def createHistogram(dicomImage):
 	pyplot.plot(histogram)
 	pyplot.show()
 #Permite seleccionar el filtro que se desa ejecutar
-def applyFilter(kernel, filter, dicomPixelArray):
-	if(filter == 1):
-		filteredDicomPixelArray = combolutionIgnore(dicomPixelArray, kernelarray[kernel])
-	if(filter == 2):
-		filteredDicomPixelArray = combolutionReduccion(dicomPixelArray, kernelarray[kernel])
-	if(filter == 3):
-		filteredDicomPixelArray = combolutionMiror(dicomPixelArray, kernelarray[kernel])
+def applyFilter(kernel, size, filter, dicomPixelArray):
+	if(filter == "Reduccion"):
+		if(kernel == "Promedio" and size == "3x3"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[0][0])
+		if(kernel == "Promedio" and size == "5x5"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[0][1])
+		if(kernel == "Promedio" and size == "7x7"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[0][2])
+		if(kernel == "Gaussiano" and size == "3x3"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[1][0])
+		if(kernel == "Gaussiano" and size == "5x5"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[1][1])
+		if(kernel == "Gaussiano" and size == "7x7"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[1][2])
+		if(kernel == "Medio" and size == "3x3"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][0])
+		if(kernel == "Medio" and size == "5x5"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][1])
+		if(kernel == "Medio" and size == "7x7"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][2])
+		if(kernel == "Mediano" and size == "3x3"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[3][0])
+		if(kernel == "Mediano" and size == "5x5"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[3][1])
+		if(kernel == "Mediano" and size == "7x7"):
+			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[3][2])
+	if(filter == "Ignorar"):
+		if(kernel == "Promedio" and size == "3x3"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[0][0])
+		if(kernel == "Promedio" and size == "5x5"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[0][1])
+		if(kernel == "Promedio" and size == "7x7"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[0][2])
+		if(kernel == "Gaussiano" and size == "3x3"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[1][0])
+		if(kernel == "Gaussiano" and size == "5x5"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[1][1])
+		if(kernel == "Gaussiano" and size == "7x7"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[1][2])
+		if(kernel == "Medio" and size == "3x3"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][0])
+		if(kernel == "Medio" and size == "5x5"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][1])
+		if(kernel == "Medio" and size == "7x7"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][2])
+		if(kernel == "Mediano" and size == "3x3"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[3][0])
+		if(kernel == "Mediano" and size == "5x5"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[3][1])
+		if(kernel == "Mediano" and size == "7x7"):
+			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[3][2])
+	if(filter == "Espejo"):
+		if(kernel == "Promedio" and size == "3x3"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[0][0])
+		if(kernel == "Promedio" and size == "5x5"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[0][1])
+		if(kernel == "Promedio" and size == "7x7"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[0][2])
+		if(kernel == "Gaussiano" and size == "3x3"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[1][0])
+		if(kernel == "Gaussiano" and size == "5x5"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[1][1])
+		if(kernel == "Gaussiano" and size == "7x7"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[1][2])
+		if(kernel == "Medio" and size == "3x3"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][0])
+		if(kernel == "Medio" and size == "5x5"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][1])
+		if(kernel == "Medio" and size == "7x7"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][2])
+		if(kernel == "Mediano" and size == "3x3"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[3][0])
+		if(kernel == "Mediano" and size == "5x5"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[3][1])
+		if(kernel == "Mediano" and size == "7x7"):
+			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[3][2])
 	else:
 		filteredDicomPixelArray = dicomPixelArray
 	return filteredDicomPixelArray
@@ -163,4 +232,20 @@ def undoFilter(dicomPixelArray, filteredDicomPixelArray):
 	filteredDicomPixelArray = dicomPixelArray.pixel_array
 	return dicomPixelArray
 
-kernelarray = []
+#Kernels previamente calculados para la aplicación de filtros
+
+averageKernel3x3=[[1,1,1],[1,1,1],[1,1,1]]
+averageKernel5x5=[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]
+averageKernel7x7=[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]
+
+gaussianKernel3x3=[[1,2,1],[2,4,2],[1,2,1]]
+gaussianKernel5x5=[[1,4,7,4,1],[4,16,26,16,4],[7,26,41,26,7],[4,16,26,16,4],[1,4,7,4,1]]
+gaussianKernel7x7=[[0,0,1,2,1,0,0],[0,3,13,22,13,3,0],[1,13,59,97,59,13,1],[2,22,97,159,97,22,2],[1,13,59,97,59,13,1],[0,3,13,22,13,3,0],[0,0,1,2,1,0,0]]
+
+kernelarray = [
+	[averageKernel3x3, averageKernel5x5, averageKernel7x7], #posicion 0 tamaños kernel promedio
+	[gaussianKernel3x3, gaussianKernel5x5, gaussianKernel7x7], #posición 1 tamaños kernel gaussiano
+	[], #posicion 2 tamaños kernel Medio (comming soon)
+	[], #posicion 3 tamaños kernel Mediano (comming soon)
+	[] #posicion 4 tamaños kernel Rayleigh (comming soon)
+	]
