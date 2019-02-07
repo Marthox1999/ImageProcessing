@@ -72,11 +72,6 @@ def dicomInfo(dicomImage):
 	except AttributeError:
 		fullInfo += "El atributo Spacing Between Slices no esta disponible" + "\n"
 	return fullInfo
-
-#Kernels
-
-def addNewKernel(kernel):
-	kernelarray.append(kernel)
 	
 #Filters
 
@@ -87,37 +82,37 @@ def convolutionMirror (matriz, kernel):
 	return 0	
 #Se reduce el tamaño de la imagen en los bordes a los que no se les pudo aplicar 
 #la operacion combolucion
-def convolutionReduccion(matriz, kernel):
+def convolutionReduccion(matrix, kernel):
 	#la diferencia entre este y el convolutionIgnore es que este en vez de ignorar los bordes que no
 	#puede afectar los cambia a 0
 	#Prevent the manipulation of the original dicomPixelArraydata
-	numOfRows=len(matriz[0])
-	numOfColumns=len(matriz)
+	numOfRows=len(matrix[0])
+	numOfColumns=len(matrix)
 	ksize=len(kernel)
 	if(ksize%2 == 0):
 		return EOFError()	
 	neighbors = math.floor(len(kernel)/2)
 	newMatrix=[[0 for _ in range(numOfColumns-(2*neighbors))] for _ in range(numOfRows-(2*neighbors))]
-	#go through the matrix avoiding the borders necesaries depending on the neighbors
+	#go through the matrix converting the borders to 0 depending on the neighbors
 	for i in range (neighbors,numOfColumns-neighbors):
 		for j in range (neighbors, numOfRows-neighbors):
 			sumKernel=0
 			for k in range(i-neighbors, i+neighbors):
 				for l in range(j-neighbors, j+neighbors):
-					sumKernel += matriz[k][l]*kernel[k-i-neighbors][l-j-neighbors]
+					sumKernel += matrix[k][l]*kernel[k-i-neighbors][l-j-neighbors]
 			newMatrix[i][j]=sumKernel
 	return newMatrix
 #No se hace ningun cambio sobre los bordes de la imagen
-def convolutionIgnore(matriz, kernel):
+def convolutionIgnore(matrix, kernel):
 	#Prevent the manipulation of the original dicomPixelArraydata
-	newMatrix=matriz
-	numOfRows=len(matriz[0])
-	numOfColumns=len(matriz)
+	newMatrix=matrix
+	numOfRows=len(matrix[0])
+	numOfColumns=len(matrix)
 	ksize=len(kernel)
 	if(ksize%2 == 0):
 		return EOFError()	
 	neighbors = math.floor(len(kernel)/2)
-	#go through the matrix avoiding the borders necesaries depending on the neighbors
+	#go through the matrix avoiding the borders depending on the neighbors
 	for i in range (neighbors,numOfColumns-neighbors):
 		for j in range (neighbors, numOfRows-neighbors):
 			sumKernel=0
@@ -125,9 +120,56 @@ def convolutionIgnore(matriz, kernel):
 			for k in range(i-neighbors, i+neighbors):
 				for l in range(j-neighbors, j+neighbors):
 					sumKernel += kernel[k-i-neighbors][l-j-neighbors]
-					sumMatrixKernel += matriz[k][l]*kernel[k-i-neighbors][l-j-neighbors]
+					sumMatrixKernel += matrix[k][l]*kernel[k-i-neighbors][l-j-neighbors]
 			newMatrix[i][j]=sumMatrixKernel/sumKernel
 	return newMatrix
+
+#Sobel Filter
+def sobelFilter(matrix):
+	#Prevent the manipulation of the original data
+	#Kernels used for sobel convolution operation
+	sobelRigthKernel = [[-1,0,1], [-2,0,2], [-1,0,1]]
+	sobelDownKernel = [[-1,-2,-1], [0,0,0], [1,2,1]]
+	neighbors = 1
+	numOfRows=len(matrix[0])
+	numOfColumns=len(matrix)
+	newMatrixSobelValues=[[0 for _ in range(numOfColumns-(2*neighbors))] for _ in range(numOfRows-(2*neighbors))]
+	newMatrixSobelAngles=[[0 for _ in range(numOfColumns-(2*neighbors))] for _ in range(numOfRows-(2*neighbors))]
+	numOfRows=len(matrix[0])
+	numOfColumns=len(matrix)
+	for i in range (1,numOfColumns-1):
+		for j in range (1, numOfRows-1):
+			sumSobelRightKernel=0
+			sumMatrixSobelRightKernel=0
+			for k in range(i-1, i+1):
+				for l in range(j-1, j+1):
+					sumSobelRightKernel += sobelRigthKernel[k-i-1][l-j-1]
+					sumMatrixSobelRightKernel += matrix[k][l]*sobelRigthKernel[k-i-1][l-j-1]
+					sumSobelSobelDownKernel += sobelDownKernel[k-i-1][l-j-1]
+					sumMatrixSobelDownKernel += matrix[k][l]*sobelDownKernel[k-i-1][l-j-1]
+			newMatrixSobelValues[i][j]=abs(sumMatrixSobelRightKernel/sumSobelRightKernel) + abs(sumMatrixSobelDownKernel/sumSobelSobelDownKernel)
+			newMatrixSobelAngles[i][j]=math.atan((sumMatrixSobelDownKernel/sumSobelSobelDownKernel)/(sumMatrixSobelRightKernel/sumSobelRightKernel))
+	return newMatrixSobelValues, newMatrixSobelAngles
+
+#Laplacial Filter
+def laplacialFilter(matrix):
+	#Prevent the manipulation of the original data
+	newMatrix = matrix
+	#Kernel used for laplacian convolution opreation
+	laplacianKernel = [[-1,-1,-1], [-1,8,-1], [-1,-1,-1]]
+	numOfRows=len(matrix[0])
+	numOfColumns=len(matrix)
+	for i in range (1,numOfColumns-1):
+		for j in range (1, numOfRows-1):
+			sumLaplacianKernel=0
+			sumMatrixLaplacianKernel=0
+			for k in range(i-1, i+1):
+				for l in range(j-1, j+1):
+					sumLaplacianKernel += laplacianKernel[k-i-1][l-j-1]
+					sumMatrixLaplacianKernel += matrix[k][l]*laplacianKernel[k-i-1][l-j-1]
+			newMatrix[i][j]=sumMatrixLaplacianKernel/sumLaplacianKernel
+	return newMatrix
+
 #Usando la libreria pyplot muestra la imagen .dicom
 def showImage(dicomPixelArray):
 	pyplot.clf()
