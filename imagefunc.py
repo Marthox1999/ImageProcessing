@@ -135,8 +135,6 @@ def sobelFilter(matrix):
 	numOfColumns=len(matrix)
 	newMatrixSobelValues=[[0 for _ in range(numOfColumns-(2*neighbors))] for _ in range(numOfRows-(2*neighbors))]
 	newMatrixSobelAngles=[[0 for _ in range(numOfColumns-(2*neighbors))] for _ in range(numOfRows-(2*neighbors))]
-	numOfRows=len(matrix[0])
-	numOfColumns=len(matrix)
 	for i in range (1,numOfColumns-1):
 		for j in range (1, numOfRows-1):
 			sumSobelRightKernel=0
@@ -170,11 +168,6 @@ def laplacialFilter(matrix):
 			newMatrix[i][j]=sumMatrixLaplacianKernel/sumLaplacianKernel
 	return newMatrix
 
-#Usando la libreria pyplot muestra la imagen .dicom
-def showImage(dicomPixelArray):
-	pyplot.clf()
-	pyplot.imshow(dicomPixelArray, cmap=pyplot.cm.bone)
-	pyplot.show()
 #Crea el histograma de una imagen en formato.dicom
 def createHistogram(dicomImage):
 	dicomPixelArray = dicomImage.pixel_array
