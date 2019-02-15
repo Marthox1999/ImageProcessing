@@ -14,63 +14,63 @@ def dicomInfo(dicomImage):
 	try:
 		fullInfo += "Largest Image Pixel Value:" + str(dicomImage.LargestImagePixelValue) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo 'LargestImagePixelValue' no esta disponible" + "\n"
+		fullInfo += "LargestImagePixelValue no esta disponible" + "\n"
 	try:
 		fullInfo += "Largest Image Pixel: " + str(dicomImage.SmallestImagePixelValue) +"\n"
 	except AttributeError:
-		fullInfo += "El atributo Largest Image Pixel no esta disponible" + "\n"
+		fullInfo += "Largest Image Pixel no esta disponible" + "\n"
 	try:
 		fullInfo += "Manufacturer: " + str(dicomImage.Manufacturer) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Manufacturer no esta disponible" + "\n"
+		fullInfo += "Manufacturer no esta disponible" + "\n"
 	try:
 		fullInfo += "Rows: " + str(dicomImage.Rows) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Rows no esta disponible" + "\n"
+		fullInfo += "Rows no esta disponible" + "\n"
 	try:
 		fullInfo += "Columns: " + str(dicomImage.Columns) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Columns no esta disponible" + "\n"
+		fullInfo += "Columns no esta disponible" + "\n"
 	try:
 		fullInfo += "Patient ID: " + str(dicomImage.PatientID) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Patiente ID no esta disponible" + "\n"
+		fullInfo += "Patiente ID no esta disponible" + "\n"
 	try:
 		fullInfo += "Series Number: " + str(dicomImage.SeriesNumber) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Series Number no esta disponible" + "\n"
+		fullInfo += "Series Number no esta disponible" + "\n"
 	try:
 		fullInfo += "BitsAllocated: " + str(dicomImage.BitsAllocated) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo BitsAllocated no esta disponible" + "\n"
+		fullInfo += "BitsAllocated no esta disponible" + "\n"
 	try:
 		fullInfo += "BitsStored: " + str(dicomImage.BitsStored) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo BitsStored no esta disponible" + "\n"
+		fullInfo += "BitsStored no esta disponible" + "\n"
 	try:
 		fullInfo += "HighBit " + str(dicomImage.HighBit) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo HighBit no esta disponible" + "\n"
+		fullInfo += "HighBit no esta disponible" + "\n"
 	try:
 		fullInfo += "Frecuency: " + str(dicomImage.ImagingFrequency) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Frecuency no esta disponible" + "\n"
+		fullInfo += "Frecuency no esta disponible" + "\n"
 	try:
 		fullInfo += "Pixel Bandwidth: " + str(dicomImage.PixelBandwidth) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Pixel Bandwidth no esta disponible" + "\n"
+		fullInfo += "Pixel Bandwidth no esta disponible" + "\n"
 	try:
 		fullInfo += "Pixel Spacing: " + str(dicomImage.PixelSpacing) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Pixel Spacing no esta disponible" + "\n"
+		fullInfo += "Pixel Spacing no esta disponible" + "\n"
 	try:
 		fullInfo += "Slice Thickness: " + str(dicomImage.SliceThickness) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Slice Thickness no esta disponible" + "\n"
+		fullInfo += "Slice Thickness no esta disponible" + "\n"
 	try:
 		fullInfo += "Spacing Between Slices: " + str(dicomImage.SpacingBetweenSlices) + "\n"
 	except AttributeError:
-		fullInfo += "El atributo Spacing Between Slices no esta disponible" + "\n"
+		fullInfo += "Spacing Between Slices no esta disponible" + "\n"
 	return fullInfo
 	
 #Filters
@@ -116,7 +116,7 @@ def sobelFilter(matrix):
 		for j in range (neighbors, columns-neighbors):
 			newMatrixValues[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelRigthKernel[:,:])
 			newMatrixAngles[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelDownKernel[:,:])
-	return newMatrixValues
+	return newMatrixValues, newMatrixAngles
 
 #Laplacial Filter
 def laplacialFilter(matrix):
@@ -134,16 +134,15 @@ def createHistogram(dicomImage):
 	dicomPixelArray = dicomImage.pixel_array
 	dicomTotalPixels = len(dicomPixelArray)*len(dicomPixelArray[0])
 	try:
-		histogram=numpy.array([0]*dicomImage.LargestImagePixelValue)
+		histogram=[0]*dicomImage.LargestImagePixelValue
 	except AttributeError:
-		histogram=numpy.array([0]*65536)
+		histogram=[0]*65536
 	for i in range (0,dicomImage.Rows-1):
 		for j in range (0, dicomImage.Columns-1):
 			index = dicomPixelArray[i][j]
 			histogram[index] += 1
 	for i in range (0, len(histogram)):
 		histogram[i]=histogram[i]/dicomTotalPixels
-	minValue = min(histogram)
 	pyplot.clf()
 	pyplot.plot(histogram)
 	pyplot.show()
@@ -305,10 +304,13 @@ gaussianKernel3x3=numpy.array([[1,2,1],[2,4,2],[1,2,1]])
 gaussianKernel5x5=numpy.array([[1,4,7,4,1],[4,16,26,16,4],[7,26,41,26,7],[4,16,26,16,4],[1,4,7,4,1]])
 gaussianKernel7x7=numpy.array([[0,0,1,2,1,0,0],[0,3,13,22,13,3,0],[1,13,59,97,59,13,1],[2,22,97,159,97,22,2],[1,13,59,97,59,13,1],[0,3,13,22,13,3,0],[0,0,1,2,1,0,0]])
 
+rayleighKernel3x3=numpy.array([0,0,0],[0,367879,164169],[0,164169,73262])
+rayleighKernel5x5=numpy.array([0,0,0,0,0],[0,367879,164169,20213,813],[0,164169,73262,9020,363],[0,20213,9020,1110,44],[0,813,363,44,1])
+
 kernelarray = [
 	[averageKernel3x3, averageKernel5x5, averageKernel7x7], #posicion 0 tamaños kernel promedio
 	[gaussianKernel3x3, gaussianKernel5x5, gaussianKernel7x7], #posición 1 tamaños kernel gaussiano
-	[], #posicion 2 tamaños kernel Medio (comming soon)
-	[], #posicion 3 tamaños kernel Mediano (comming soon)
-	[] #posicion 4 tamaños kernel Rayleigh (comming soon)
+	[None, None, None], #posicion 2 tamaños kernel Medio (comming soon)
+	[None, None, None], #posicion 3 tamaños kernel Mediano (comming soon)
+	[rayleighKernel3x3,rayleighKernel5x5,None] #posicion 4 tamaños kernel Rayleigh
 	]

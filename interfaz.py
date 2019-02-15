@@ -55,11 +55,6 @@ def showFilteredImage():
     imagesTemp.draw()
     imagesTemp.get_tk_widget().pack(padx=5, pady=15)
 
-
-#fileName = ""
-#dicomImage = pydicom.dcmread(fileName)
-#dicomPixelArray = dicomImage.pixel_array
-
 filterList=["Sin Filtro","Reduccion","Ignorar","Espejo"]
 kernelList=["Promedio","Gaussiano","Medio","Mediano"]
 kernelSize=["3x3","5x5","7x7"]
