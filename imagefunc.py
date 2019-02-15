@@ -77,100 +77,80 @@ def dicomInfo(dicomImage):
 
 #Refleja la imagen para poder hacer la operacion de combolucion en las filas
 #y columnas de la imagen original que normamente no se le podria aplicar (bordes)
-def convolutionMirror (matriz, kernel):
-	#esto es una prueba
-	return 0	
-#Se reduce el tamaño de la imagen en los bordes a los que no se les pudo aplicar 
-#la operacion combolucion
-def convolutionReduccion(matrix, kernel):
-	#la diferencia entre este y el convolutionIgnore es que este en vez de ignorar los bordes que no
-	#puede afectar los cambia a 0
-	#Prevent the manipulation of the original dicomPixelArraydata
-	numOfRows=len(matrix[0])
-	numOfColumns=len(matrix)
-	ksize=len(kernel)
-	if(ksize%2 == 0):
-		return EOFError()	
-	neighbors = math.floor(len(kernel)/2)
-	newMatrix=[[0 for _ in range(numOfColumns-(2*neighbors))] for _ in range(numOfRows-(2*neighbors))]
-	#go through the matrix converting the borders to 0 depending on the neighbors
-	for i in range (neighbors,numOfColumns-neighbors):
-		for j in range (neighbors, numOfRows-neighbors):
-			sumKernel=0
-			for k in range(i-neighbors, i+neighbors):
-				for l in range(j-neighbors, j+neighbors):
-					sumKernel += matrix[k][l]*kernel[k-i-neighbors][l-j-neighbors]
-			newMatrix[i][j]=sumKernel
+def convolutionMirror(matrix,kernel):
+	neighbors = int(math.floor(len(kernel)/2))
+	rows, columns = matrix.shape
+	mirrorMatrix = numpy.pad(matrix,neighbors,'symmetric')
+	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	rows, columns = mirrorMatrix.shape
+	for i in range (neighbors, rows-neighbors):
+		for j in range (neighbors, columns-neighbors):
+			newMatrix[i-neighbors][j-neighbors]=numpy.sum(mirrorMatrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
 	return newMatrix
-#No se hace ningun cambio sobre los bordes de la imagen
-def convolutionIgnore(matrix, kernel):
-	#Prevent the manipulation of the original dicomPixelArraydata
-	newMatrix=matrix
-	numOfRows=len(matrix[0])
-	numOfColumns=len(matrix)
-	ksize=len(kernel)
-	if(ksize%2 == 0):
-		return EOFError()	
-	neighbors = math.floor(len(kernel)/2)
-	#go through the matrix avoiding the borders depending on the neighbors
-	for i in range (neighbors,numOfColumns-neighbors):
-		for j in range (neighbors, numOfRows-neighbors):
-			sumKernel=0
-			sumMatrixKernel=0
-			for k in range(i-neighbors, i+neighbors):
-				for l in range(j-neighbors, j+neighbors):
-					sumKernel += kernel[k-i-neighbors][l-j-neighbors]
-					sumMatrixKernel += matrix[k][l]*kernel[k-i-neighbors][l-j-neighbors]
-			newMatrix[i][j]=sumMatrixKernel/sumKernel
+def convolutionReduccion(matrix,kernel):
+	neighbors = int(math.floor(len(kernel)/2))
+	rows, columns = matrix.shape
+	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	for i in range (neighbors, rows-neighbors):
+		for j in range (neighbors, columns-neighbors):
+			newMatrix[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
 	return newMatrix
-
+	
+def convolutionIgnore(matrix,kernel):
+	neighbors = int(math.floor(len(kernel)/2))
+	rows, columns = matrix.shape
+	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	for i in range (neighbors, rows-neighbors):
+		for j in range (neighbors, columns-neighbors):
+			newMatrix[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
+	return newMatrix
 #Sobel Filter
 def sobelFilter(matrix):
-	#Prevent the manipulation of the original data
-	#Kernels used for sobel convolution operation
-	sobelRigthKernel = [[-1,0,1], [-2,0,2], [-1,0,1]]
-	sobelDownKernel = [[-1,-2,-1], [0,0,0], [1,2,1]]
-	neighbors = 1
-	numOfRows=len(matrix[0])
-	numOfColumns=len(matrix)
-	newMatrixSobelValues=[[0 for _ in range(numOfColumns-(2*neighbors))] for _ in range(numOfRows-(2*neighbors))]
-	newMatrixSobelAngles=[[0 for _ in range(numOfColumns-(2*neighbors))] for _ in range(numOfRows-(2*neighbors))]
-	for i in range (1,numOfColumns-1):
-		for j in range (1, numOfRows-1):
-			sumSobelRightKernel=0
-			sumMatrixSobelRightKernel=0
-			for k in range(i-1, i+1):
-				for l in range(j-1, j+1):
-					sumSobelRightKernel += sobelRigthKernel[k-i-1][l-j-1]
-					sumMatrixSobelRightKernel += matrix[k][l]*sobelRigthKernel[k-i-1][l-j-1]
-					sumSobelSobelDownKernel += sobelDownKernel[k-i-1][l-j-1]
-					sumMatrixSobelDownKernel += matrix[k][l]*sobelDownKernel[k-i-1][l-j-1]
-			newMatrixSobelValues[i][j]=abs(sumMatrixSobelRightKernel/sumSobelRightKernel) + abs(sumMatrixSobelDownKernel/sumSobelSobelDownKernel)
-			newMatrixSobelAngles[i][j]=math.atan((sumMatrixSobelDownKernel/sumSobelSobelDownKernel)/(sumMatrixSobelRightKernel/sumSobelRightKernel))
-	return newMatrixSobelValues, newMatrixSobelAngles
+	sobelRigthKernel = numpy.array([[-1,0,1], [-2,0,2], [-1,0,1]])
+	sobelDownKernel = numpy.array([[-1,-2,-1], [0,0,0], [1,2,1]])
+	neighbors = int(math.floor(len(sobelRigthKernel)/2))
+	rows, columns = matrix.shape
+	newMatrixValues = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	newMatrixAngles = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	for i in range (neighbors, rows-neighbors):
+		for j in range (neighbors, columns-neighbors):
+			newMatrixValues[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelRigthKernel[:,:])
+			newMatrixAngles[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelDownKernel[:,:])
+	return newMatrixValues
 
 #Laplacial Filter
 def laplacialFilter(matrix):
-	#Prevent the manipulation of the original data
-	newMatrix = matrix
-	#Kernel used for laplacian convolution opreation
-	laplacianKernel = [[-1,-1,-1], [-1,8,-1], [-1,-1,-1]]
-	numOfRows=len(matrix[0])
-	numOfColumns=len(matrix)
-	for i in range (1,numOfColumns-1):
-		for j in range (1, numOfRows-1):
-			sumLaplacianKernel=0
-			sumMatrixLaplacianKernel=0
-			for k in range(i-1, i+1):
-				for l in range(j-1, j+1):
-					sumLaplacianKernel += laplacianKernel[k-i-1][l-j-1]
-					sumMatrixLaplacianKernel += matrix[k][l]*laplacianKernel[k-i-1][l-j-1]
-			newMatrix[i][j]=sumMatrixLaplacianKernel/sumLaplacianKernel
+	laplacianKernel = numpy.array([[-1,-1,-1], [-1,8,-1], [-1,-1,-1]])
+	neighbors = int(math.floor(len(laplacianKernel)/2))
+	rows, columns = matrix.shape
+	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	for i in range (neighbors, rows-neighbors):
+		for j in range (neighbors, columns-neighbors):
+			newMatrix[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*laplacianKernel[:,:])
 	return newMatrix
 
 #Crea el histograma de una imagen en formato.dicom
 def createHistogram(dicomImage):
 	dicomPixelArray = dicomImage.pixel_array
+	dicomTotalPixels = len(dicomPixelArray)*len(dicomPixelArray[0])
+	try:
+		histogram=numpy.array([0]*dicomImage.LargestImagePixelValue)
+	except AttributeError:
+		histogram=numpy.array([0]*65536)
+	for i in range (0,dicomImage.Rows-1):
+		for j in range (0, dicomImage.Columns-1):
+			index = dicomPixelArray[i][j]
+			histogram[index] += 1
+	for i in range (0, len(histogram)):
+		histogram[i]=histogram[i]/dicomTotalPixels
+	minValue = min(histogram)
+	pyplot.clf()
+	pyplot.plot(histogram)
+	pyplot.show()
+
+def thresholdingOtsu(dicomImage):
+	dicomPixelArray = dicomImage.pixel_array
+	dicomTotalPixels = len(dicomPixelArray)*len(dicomPixelArray[0])
 	try:
 		histogram=[0]*dicomImage.LargestImagePixelValue
 	except AttributeError:
@@ -178,104 +158,152 @@ def createHistogram(dicomImage):
 	for i in range (0,dicomImage.Rows-1):
 		for j in range (0, dicomImage.Columns-1):
 			index = dicomPixelArray[i][j]
-			histogram[index] += 1
+			if(index != 0):
+				histogram[index] += 1
 			#histogram.insert(dicomPixelArray[i][j], histogram[dicomPixelArray[i][j]]+1)
-	pyplot.clf()
-	pyplot.plot(histogram)
-	pyplot.show()
+	for i in range (0, len(histogram)):
+		histogram[i]=histogram[i]/dicomTotalPixels
+	minvalue,maxvalue=min(histogram),max(histogram)
+	for i in range (0, minvalue):
+		if(histogram[i]==0):
+			del histogram[i]
+	for i in range(maxvalue+1, len(histogram)):
+		if(histogram[i]==0):
+			del histogram[i]
+	q1,q2=0,0 
+	for t in range (minvalue+1, maxvalue):
+		for i in range(minvalue,t):
+			q1 += histogram[i]
+		for j in range(t+1, maxvalue):
+			q2 += histogram[j]
+			
+
 #Permite seleccionar el filtro que se desa ejecutar
 def applyFilter(kernel, size, filter, dicomPixelArray):
 	if(filter == "Reduccion"):
 		if(kernel == "Promedio" and size == "3x3"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[0][0])
+			return filteredDicomPixelArray
 		if(kernel == "Promedio" and size == "5x5"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[0][1])
+			return filteredDicomPixelArray
 		if(kernel == "Promedio" and size == "7x7"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[0][2])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "3x3"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[1][0])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "5x5"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[1][1])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[1][2])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "3x3"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][0])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "5x5"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][1])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "7x7"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][2])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "3x3"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[3][0])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "5x5"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[3][1])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[3][2])
+			return filteredDicomPixelArray
 	if(filter == "Ignorar"):
 		if(kernel == "Promedio" and size == "3x3"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[0][0])
+			return filteredDicomPixelArray
 		if(kernel == "Promedio" and size == "5x5"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[0][1])
+			return filteredDicomPixelArray
 		if(kernel == "Promedio" and size == "7x7"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[0][2])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "3x3"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[1][0])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "5x5"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[1][1])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[1][2])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "3x3"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][0])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "5x5"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][1])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "7x7"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][2])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "3x3"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[3][0])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "5x5"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[3][1])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[3][2])
+			return filteredDicomPixelArray
 	if(filter == "Espejo"):
 		if(kernel == "Promedio" and size == "3x3"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[0][0])
+			return filteredDicomPixelArray
 		if(kernel == "Promedio" and size == "5x5"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[0][1])
+			return filteredDicomPixelArray
 		if(kernel == "Promedio" and size == "7x7"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[0][2])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "3x3"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[1][0])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "5x5"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[1][1])
+			return filteredDicomPixelArray
 		if(kernel == "Gaussiano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[1][2])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "3x3"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][0])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "5x5"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][1])
+			return filteredDicomPixelArray
 		if(kernel == "Medio" and size == "7x7"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][2])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "3x3"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[3][0])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "5x5"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[3][1])
+			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[3][2])
+			return filteredDicomPixelArray
 	else:
 		filteredDicomPixelArray = dicomPixelArray
 	return filteredDicomPixelArray
-def undoFilter(dicomPixelArray, filteredDicomPixelArray):
-	filteredDicomPixelArray = dicomPixelArray.pixel_array
-	return dicomPixelArray
 
 #Kernels previamente calculados para la aplicación de filtros
 
-averageKernel3x3=[[1,1,1],[1,1,1],[1,1,1]]
-averageKernel5x5=[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]
-averageKernel7x7=[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]
+averageKernel3x3=numpy.array([[1,1,1],[1,1,1],[1,1,1]])
+averageKernel5x5=numpy.array([[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]])
+averageKernel7x7=numpy.array([[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]])
 
-gaussianKernel3x3=[[1,2,1],[2,4,2],[1,2,1]]
-gaussianKernel5x5=[[1,4,7,4,1],[4,16,26,16,4],[7,26,41,26,7],[4,16,26,16,4],[1,4,7,4,1]]
-gaussianKernel7x7=[[0,0,1,2,1,0,0],[0,3,13,22,13,3,0],[1,13,59,97,59,13,1],[2,22,97,159,97,22,2],[1,13,59,97,59,13,1],[0,3,13,22,13,3,0],[0,0,1,2,1,0,0]]
+gaussianKernel3x3=numpy.array([[1,2,1],[2,4,2],[1,2,1]])
+gaussianKernel5x5=numpy.array([[1,4,7,4,1],[4,16,26,16,4],[7,26,41,26,7],[4,16,26,16,4],[1,4,7,4,1]])
+gaussianKernel7x7=numpy.array([[0,0,1,2,1,0,0],[0,3,13,22,13,3,0],[1,13,59,97,59,13,1],[2,22,97,159,97,22,2],[1,13,59,97,59,13,1],[0,3,13,22,13,3,0],[0,0,1,2,1,0,0]])
 
 kernelarray = [
 	[averageKernel3x3, averageKernel5x5, averageKernel7x7], #posicion 0 tamaños kernel promedio

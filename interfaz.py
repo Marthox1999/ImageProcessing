@@ -10,6 +10,12 @@ import pydicom
 import numpy
 import math
 import imageFunc
+import copy
+
+fileName = ""
+dicomImage = None
+dicomPixelArray = None
+dicomFilteredPixelArray = None
 
 def searchImage():
     global fileName, dicomImage, dicomPixelArray
@@ -24,8 +30,9 @@ def applyFilter():
     kernel=selectKernelCBox.get()
     size=selectKernelSizeCBox.get()
     filter=selectFilterCBox.get()
+    localDicomPixelArray = dicomPixelArray
     global dicomFilteredPixelArray
-    dicomFilteredPixelArray=imageFunc.applyFilter(kernel, size, filter, dicomPixelArray)
+    dicomFilteredPixelArray=copy.copy(imageFunc.applyFilter(kernel, size, filter, localDicomPixelArray))
     showFilteredImage()
 
 def showImage():
@@ -36,7 +43,7 @@ def showImage():
     subPlot.imshow(dicomPixelArray, cmap=plt.cm.gray)
     imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
     imagesTemp.draw()
-    imagesTemp.get_tk_widget().pack()
+    imagesTemp.get_tk_widget().pack(padx=5, pady=15)
 
 def showFilteredImage():
     for widget in imageFrame.winfo_children():
@@ -46,7 +53,7 @@ def showFilteredImage():
     subPlot.imshow(dicomFilteredPixelArray, cmap=plt.cm.gray)
     imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
     imagesTemp.draw()
-    imagesTemp.get_tk_widget().pack()
+    imagesTemp.get_tk_widget().pack(padx=5, pady=15)
 
 
 #fileName = ""
@@ -63,21 +70,23 @@ root.configure(bg="black")
 root.geometry("1000x500")
 root.resizable(0,0)
 
-imageInfoFrame = tk.Frame(root, bg="gray")
+imageInfoFrame = tk.Frame(root, bg="black")
 imageInfoFrame.pack(side=tk.LEFT, padx= 10, pady=10)
 buttonFrame = tk.Frame(root, bg="black")
 buttonFrame.pack(side=tk.RIGHT, padx=10, pady=10)
 
-searchImageButton = tk.Button(buttonFrame, text="Search Image", bg="gray", fg="white", height=3, width=15, command=searchImage)
+searchImageButton = tk.Button(buttonFrame, text="Search Image", bg="gray30", fg="white", height=2, width=15, command=searchImage)
 searchImageButton.pack(padx=5, pady=5)
-showImageButton = tk.Button(buttonFrame, text="Show Image", bg="gray", fg="white", height=3, width=15, command=showImage)
+showImageButton = tk.Button(buttonFrame, text="Show Image", bg="gray30", fg="white", height=2, width=15, command=showImage)
 showImageButton.pack(padx=5, pady=5)
-showImageInfoButton = tk.Button(buttonFrame, text="Show Image Info", bg="gray", fg="white", height=3, width=15, command=showInformation)
+showImageInfoButton = tk.Button(buttonFrame, text="Show Image Info", bg="gray30", fg="white", height=2, width=15, command=showInformation)
 showImageInfoButton.pack(padx=5, pady=5)
-showHistogramButton = tk.Button(buttonFrame, text="Show Histogram", bg="gray", fg="white", height=3, width=15, command = lambda: imageFunc.createHistogram(dicomImage))
+showHistogramButton = tk.Button(buttonFrame, text="Show Histogram", bg="gray30", fg="white", height=2, width=15, command = lambda: imageFunc.createHistogram(dicomImage))
 showHistogramButton.pack(padx=5, pady=5)
-applyFilterButton = tk.Button(buttonFrame, text="Apply Filter", bg="gray",fg="white", height=3, width=15, command=applyFilter)
+applyFilterButton = tk.Button(buttonFrame, text="Apply Filter", bg="gray30",fg="white", height=2, width=15, command=applyFilter)
 applyFilterButton.pack(padx=5, pady=5)
+applyBordersButton = tk.Button(buttonFrame, text="Apply Borders", bg="gray30",fg="white", height=2, width=15, command=applyFilter)
+applyBordersButton.pack(padx=5, pady=5)
 selectFilterLabel = tk.Label(buttonFrame, text="Seleccione un filtro", bg="black", fg="white")
 selectFilterLabel.pack(padx=5, pady=5)
 selectFilterCBox = ttk.Combobox(buttonFrame, values=filterList, state="readonly")
@@ -92,11 +101,10 @@ selectKernelSizeCBox = ttk.Combobox(buttonFrame, values=kernelSize, state="reado
 selectKernelSizeCBox.current(0)
 selectKernelSizeCBox.pack(side=tk.RIGHT, padx=5, pady=5)
 
-imageInfoLabel = tk.Label(imageInfoFrame, text="Aqui se desplegara la informacion "+"\n"+"de la imagen seleccionada", bg="gray", fg="white", height=30, width=50)
+titleLabel = tk.Label(imageInfoFrame, text="Procesamiento de imagenes", bg="black", fg="white", height=2, width=25, font="Arial 12 bold")
+titleLabel.pack(side=tk.TOP, padx=5, pady=5)
+imageInfoLabel = tk.Label(imageInfoFrame, text="Aqui se desplegara la informacion "+"\n"+"de la imagen seleccionada", bg="gray", fg="white", height=30, width=35)
 imageInfoLabel.pack(padx=5, pady=5)
-
-textFrame=tk.Frame(root, bg="black")
-textFrame.pack(side=tk.TOP, padx=5, pady=15)
 
 imageFrame=tk.Frame(root, bg="black")
 imageFrame.pack()
