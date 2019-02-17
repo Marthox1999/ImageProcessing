@@ -91,18 +91,18 @@ def convolutionReduccion(matrix,kernel):
 	neighbors = int(math.floor(len(kernel)/2))
 	rows, columns = matrix.shape
 	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
-	for i in range (neighbors, rows-neighbors):
-		for j in range (neighbors, columns-neighbors):
-			newMatrix[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
+	for i in range (neighbors, rows-neighbors-1):
+		for j in range (neighbors, columns-neighbors-1):
+			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
 	return newMatrix
 	
 def convolutionIgnore(matrix,kernel):
 	neighbors = int(math.floor(len(kernel)/2))
 	rows, columns = matrix.shape
 	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
-	for i in range (neighbors, rows-neighbors):
-		for j in range (neighbors, columns-neighbors):
-			newMatrix[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
+	for i in range (neighbors, rows-neighbors-1):
+		for j in range (neighbors, columns-neighbors-1):
+			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
 	return newMatrix
 #Sobel Filter
 def sobelFilter(matrix):
@@ -112,10 +112,10 @@ def sobelFilter(matrix):
 	rows, columns = matrix.shape
 	newMatrixValues = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
 	newMatrixAngles = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
-	for i in range (neighbors, rows-neighbors):
-		for j in range (neighbors, columns-neighbors):
-			newMatrixValues[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelRigthKernel[:,:])
-			newMatrixAngles[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelDownKernel[:,:])
+	for i in range (neighbors, rows-neighbors-1):
+		for j in range (neighbors, columns-neighbors-1):
+			newMatrixValues[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelRigthKernel[:,:])
+			newMatrixAngles[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelDownKernel[:,:])
 	return newMatrixValues, newMatrixAngles
 
 #Laplacial Filter
@@ -124,9 +124,9 @@ def laplacialFilter(matrix):
 	neighbors = int(math.floor(len(laplacianKernel)/2))
 	rows, columns = matrix.shape
 	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
-	for i in range (neighbors, rows-neighbors):
-		for j in range (neighbors, columns-neighbors):
-			newMatrix[i-neighbors][j-neighbors]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*laplacianKernel[:,:])
+	for i in range (neighbors, rows-neighbors-1):
+		for j in range (neighbors, columns-neighbors-1):
+			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*laplacianKernel[:,:])
 	return newMatrix
 
 #Crea el histograma de una imagen en formato.dicom
@@ -198,13 +198,13 @@ def applyFilter(kernel, size, filter, dicomPixelArray):
 		if(kernel == "Gaussiano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[1][2])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "3x3"):
+		if(kernel == "Rayleigh" and size == "3x3"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][0])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "5x5"):
+		if(kernel == "Rayleigh" and size == "5x5"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][1])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "7x7"):
+		if(kernel == "Rayleigh" and size == "7x7"):
 			filteredDicomPixelArray = convolutionReduccion(dicomPixelArray, kernelarray[2][2])
 			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "3x3"):
@@ -235,13 +235,13 @@ def applyFilter(kernel, size, filter, dicomPixelArray):
 		if(kernel == "Gaussiano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[1][2])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "3x3"):
+		if(kernel == "Rayleigh" and size == "3x3"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][0])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "5x5"):
+		if(kernel == "Rayleigh" and size == "5x5"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][1])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "7x7"):
+		if(kernel == "Rayleigh" and size == "7x7"):
 			filteredDicomPixelArray = convolutionIgnore(dicomPixelArray, kernelarray[2][2])
 			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "3x3"):
@@ -272,13 +272,13 @@ def applyFilter(kernel, size, filter, dicomPixelArray):
 		if(kernel == "Gaussiano" and size == "7x7"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[1][2])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "3x3"):
+		if(kernel == "Rayleigh" and size == "3x3"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][0])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "5x5"):
+		if(kernel == "Rayleigh" and size == "5x5"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][1])
 			return filteredDicomPixelArray
-		if(kernel == "Medio" and size == "7x7"):
+		if(kernel == "Rayleigh" and size == "7x7"):
 			filteredDicomPixelArray = convolutionMirror(dicomPixelArray, kernelarray[2][2])
 			return filteredDicomPixelArray
 		if(kernel == "Mediano" and size == "3x3"):
@@ -304,13 +304,12 @@ gaussianKernel3x3=numpy.array([[1,2,1],[2,4,2],[1,2,1]])
 gaussianKernel5x5=numpy.array([[1,4,7,4,1],[4,16,26,16,4],[7,26,41,26,7],[4,16,26,16,4],[1,4,7,4,1]])
 gaussianKernel7x7=numpy.array([[0,0,1,2,1,0,0],[0,3,13,22,13,3,0],[1,13,59,97,59,13,1],[2,22,97,159,97,22,2],[1,13,59,97,59,13,1],[0,3,13,22,13,3,0],[0,0,1,2,1,0,0]])
 
-rayleighKernel3x3=numpy.array([0,0,0],[0,367879,164169],[0,164169,73262])
-rayleighKernel5x5=numpy.array([0,0,0,0,0],[0,367879,164169,20213,813],[0,164169,73262,9020,363],[0,20213,9020,1110,44],[0,813,363,44,1])
+rayleighKernel3x3=numpy.array([[0,0,0],[0,367879,164169],[0,164169,73262]])
+rayleighKernel5x5=numpy.array([[0,0,0,0,0],[0,367879,164169,20213,813],[0,164169,73262,9020,363],[0,20213,9020,1110,44],[0,813,363,44,1]])
 
 kernelarray = [
 	[averageKernel3x3, averageKernel5x5, averageKernel7x7], #posicion 0 tamaños kernel promedio
 	[gaussianKernel3x3, gaussianKernel5x5, gaussianKernel7x7], #posición 1 tamaños kernel gaussiano
-	[None, None, None], #posicion 2 tamaños kernel Medio (comming soon)
+	[rayleighKernel3x3,rayleighKernel5x5,None], #posicion 2 tamaños kernel Rayleigh
 	[None, None, None], #posicion 3 tamaños kernel Mediano (comming soon)
-	[rayleighKernel3x3,rayleighKernel5x5,None] #posicion 4 tamaños kernel Rayleigh
 	]
