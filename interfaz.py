@@ -56,7 +56,7 @@ def showFilteredImage():
     imagesTemp.get_tk_widget().pack(padx=5, pady=15)
 
 filterList=["Sin Filtro","Reduccion","Ignorar","Espejo"]
-kernelList=["Promedio","Gaussiano","Medio","Mediano"]
+kernelList=["Promedio","Gaussiano","Rayleigh","Mediano"]
 kernelSize=["3x3","5x5","7x7"]
 
 root = tk.Tk()
