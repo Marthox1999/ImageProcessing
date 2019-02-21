@@ -95,7 +95,6 @@ def convolutionReduccion(matrix,kernel):
 		for j in range (neighbors, columns-neighbors-1):
 			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
 	return newMatrix
-	
 def convolutionIgnore(matrix,kernel):
 	neighbors = int(math.floor(len(kernel)/2))
 	rows, columns = matrix.shape
@@ -109,15 +108,24 @@ def sobelFilter(matrix):
 	sobelRigthKernel = numpy.array([[-1,0,1], [-2,0,2], [-1,0,1]])
 	sobelDownKernel = numpy.array([[-1,-2,-1], [0,0,0], [1,2,1]])
 	neighbors = int(math.floor(len(sobelRigthKernel)/2))
-	rows, columns = matrix.shape
+	rows, columns = numpy.shape(matrix)
 	newMatrixValues = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
-	newMatrixAngles = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	newMatrixAngles = numpy.array([[0.0 for _ in range (columns)] for _ in range (rows)])
+	horizontalMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	verticalMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
 	for i in range (neighbors, rows-neighbors-1):
 		for j in range (neighbors, columns-neighbors-1):
-			newMatrixValues[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelRigthKernel[:,:])
-			newMatrixAngles[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelDownKernel[:,:])
+			horizontalMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelRigthKernel[:,:])
+			verticalMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*sobelDownKernel[:,:])
+			newMatrixValues[i][j]=abs(horizontalMatrix[i][j])+abs(verticalMatrix[i][j])
+			try:
+				newMatrixAngles[i][j]=math.atan(verticalMatrix[i][j]/horizontalMatrix[i][j])
+			except ZeroDivisionError:
+				newMatrixValues[i][j]=0
+	horizontalMatrix=None
+	verticalMatrix=None
+	umbral=thresholdingOtsu(newMatrixValues)
 	return newMatrixValues, newMatrixAngles
-
 #Laplacial Filter
 def laplacialFilter(matrix):
 	laplacianKernel = numpy.array([[-1,-1,-1], [-1,8,-1], [-1,-1,-1]])
@@ -128,9 +136,23 @@ def laplacialFilter(matrix):
 		for j in range (neighbors, columns-neighbors-1):
 			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*laplacianKernel[:,:])
 	return newMatrix
-
 #Crea el histograma de una imagen en formato.dicom
-def createHistogram(dicomImage):
+def createHistogram(matrix):
+	print(numpy.amax(matrix))
+	dicomTotalPixels = len(matrix)*len(matrix[0])
+	rows, columns = matrix.shape
+	#histogram=[0]*max(map(max, matrix))+1
+	#histogram=np.zeros(65536)
+	histogram=[0]*(numpy.amax(matrix)+1)
+	for i in range (0,rows):
+		for j in range (0, columns):
+			index = matrix[i][j]
+			#print(index)
+			histogram[index] += 1
+	for i in range (0, len(histogram)-1):
+		histogram[i]=histogram[i]/dicomTotalPixels
+	return histogram
+def ShowHistogram(dicomImage):
 	dicomPixelArray = dicomImage.pixel_array
 	dicomTotalPixels = len(dicomPixelArray)*len(dicomPixelArray[0])
 	try:
@@ -146,37 +168,30 @@ def createHistogram(dicomImage):
 	pyplot.clf()
 	pyplot.plot(histogram)
 	pyplot.show()
-
-def thresholdingOtsu(dicomImage):
-	dicomPixelArray = dicomImage.pixel_array
-	dicomTotalPixels = len(dicomPixelArray)*len(dicomPixelArray[0])
-	try:
-		histogram=[0]*dicomImage.LargestImagePixelValue
-	except AttributeError:
-		histogram=[0]*65536
-	for i in range (0,dicomImage.Rows-1):
-		for j in range (0, dicomImage.Columns-1):
-			index = dicomPixelArray[i][j]
-			if(index != 0):
-				histogram[index] += 1
-			#histogram.insert(dicomPixelArray[i][j], histogram[dicomPixelArray[i][j]]+1)
-	for i in range (0, len(histogram)):
-		histogram[i]=histogram[i]/dicomTotalPixels
-	minvalue,maxvalue=min(histogram),max(histogram)
-	for i in range (0, minvalue):
-		if(histogram[i]==0):
-			del histogram[i]
-	for i in range(maxvalue+1, len(histogram)):
-		if(histogram[i]==0):
-			del histogram[i]
-	q1,q2=0,0 
-	for t in range (minvalue+1, maxvalue):
-		for i in range(minvalue,t):
-			q1 += histogram[i]
-		for j in range(t+1, maxvalue):
-			q2 += histogram[j]
-			
-
+def thresholdingOtsu(matrix):
+	dicomTotalPixels = len(matrix)*len(matrix[0])
+	histogram = createHistogram(matrix)
+	maxt,q1,q2,m1,m2=0,0,0,0,0
+	tArray=[]
+	print(len(histogram))
+	for t in range (len(histogram)):
+		for i in range (0,t):
+			q1+=histogram[i]
+		for i in range (t+1,len(histogram)):
+			q2+=histogram[i]
+		for i in range (0,t):
+			try:
+				m1+=i*histogram[i]/q1
+			except ZeroDivisionError:
+				m1=0
+		for i in range (t+1,len(histogram)):
+			try:
+				m2+=i*histogram[i]/q1
+			except ZeroDivisionError:
+				m2=0
+		t=math.sqrt((q1*q1)*((m1-m2)**2))
+		tArray.append(t)
+	maxt=max(tArray)
 #Permite seleccionar el filtro que se desa ejecutar
 def applyFilter(kernel, size, filter, dicomPixelArray):
 	if(filter == "Reduccion"):
