@@ -16,6 +16,7 @@ fileName = ""
 dicomImage = None
 dicomPixelArray = None
 dicomFilteredPixelArray = None
+dicomThresholdingPixelArray = None
 
 def searchImage():
     global fileName, dicomImage, dicomPixelArray
@@ -35,6 +36,15 @@ def applyFilter():
     dicomFilteredPixelArray=copy.copy(imageFunc.applyFilter(kernel, size, filter, localDicomPixelArray))
     showFilteredImage()
 
+def thresholding():
+    global dicomThresholdingPixelArray
+    global dicomAnglesMatrix
+    if(dicomFilteredPixelArray is None):
+        dicomThresholdingPixelArray, dicomAnglesMatrix = copy.copy(imageFunc.sobelFilter(dicomPixelArray))
+    else:
+        dicomThresholdingPixelArray,dicomAnglesMatrix=copy.copy(imageFunc.sobelFilter(dicomFilteredPixelArray))
+    showThresholdImage()
+
 def showImage():
     for widget in imageFrame.winfo_children():
         widget.destroy()
@@ -51,6 +61,16 @@ def showFilteredImage():
     figure = plt.Figure()
     subPlot = figure.add_subplot(111)
     subPlot.imshow(dicomFilteredPixelArray, cmap=plt.cm.gray)
+    imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
+    imagesTemp.draw()
+    imagesTemp.get_tk_widget().pack(padx=5, pady=15)
+
+def showThresholdImage():
+    for widget in imageFrame.winfo_children():
+        widget.destroy()
+    figure = plt.Figure()
+    subPlot = figure.add_subplot(111)
+    subPlot.imshow(dicomThresholdingPixelArray, cmap=plt.cm.gray)
     imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
     imagesTemp.draw()
     imagesTemp.get_tk_widget().pack(padx=5, pady=15)
@@ -76,11 +96,11 @@ showImageButton = tk.Button(buttonFrame, text="Show Image", bg="gray30", fg="whi
 showImageButton.pack(padx=5, pady=5)
 showImageInfoButton = tk.Button(buttonFrame, text="Show Image Info", bg="gray30", fg="white", height=2, width=15, command=showInformation)
 showImageInfoButton.pack(padx=5, pady=5)
-showHistogramButton = tk.Button(buttonFrame, text="Show Histogram", bg="gray30", fg="white", height=2, width=15, command = lambda: imageFunc.createHistogram(dicomImage))
+showHistogramButton = tk.Button(buttonFrame, text="Show Histogram", bg="gray30", fg="white", height=2, width=15, command = lambda: imageFunc.ShowHistogram(dicomImage))
 showHistogramButton.pack(padx=5, pady=5)
 applyFilterButton = tk.Button(buttonFrame, text="Apply Filter", bg="gray30",fg="white", height=2, width=15, command=applyFilter)
 applyFilterButton.pack(padx=5, pady=5)
-applyBordersButton = tk.Button(buttonFrame, text="Apply Borders", bg="gray30",fg="white", height=2, width=15, command=applyFilter)
+applyBordersButton = tk.Button(buttonFrame, text="Thresholding", bg="gray30",fg="white", height=2, width=15, command=thresholding)
 applyBordersButton.pack(padx=5, pady=5)
 selectFilterLabel = tk.Label(buttonFrame, text="Seleccione un filtro", bg="black", fg="white")
 selectFilterLabel.pack(padx=5, pady=5)
