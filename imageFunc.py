@@ -85,7 +85,7 @@ def convolutionMirror(matrix,kernel):
 	rows, columns = mirrorMatrix.shape
 	for i in range (neighbors, rows-neighbors):
 		for j in range (neighbors, columns-neighbors):
-			newMatrix[i-neighbors][j-neighbors]=numpy.sum(mirrorMatrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])/numpy.sum(kernel)
+			newMatrix[i-neighbors][j-neighbors]=numpy.sum(mirrorMatrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
 	print("valor maximo imagen filtrada = " + str(numpy.amax(newMatrix)))
 	return newMatrix
 def convolutionReduccion(matrix,kernel):
@@ -94,7 +94,7 @@ def convolutionReduccion(matrix,kernel):
 	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
 	for i in range (neighbors, rows-neighbors-1):
 		for j in range (neighbors, columns-neighbors-1):
-			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])/numpy.sum(kernel)
+			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
 	print("valor maximo imagen filtrada = " + str(numpy.amax(newMatrix)))
 	return newMatrix
 def convolutionIgnore(matrix,kernel):
@@ -103,7 +103,7 @@ def convolutionIgnore(matrix,kernel):
 	newMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
 	for i in range (neighbors, rows-neighbors-1):
 		for j in range (neighbors, columns-neighbors-1):
-			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])/numpy.sum(kernel)
+			newMatrix[i][j]=numpy.sum(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1]*kernel[:,:])
 	print("valor maximo imagen filtrada = " + str(numpy.amax(newMatrix)))
 	return newMatrix
 #Sobel Filter
@@ -113,29 +113,16 @@ def sobelFilter(matrix):
 	neighbors = int(math.floor(len(sobelRigthKernel)/2))
 	rows, columns = numpy.shape(matrix)
 	newMatrixValues = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
-	newMatrixAngles = numpy.array([[0.0 for _ in range (columns)] for _ in range (rows)])
-	horizontalMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
-	verticalMatrix = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	newMatrixAngles = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
 	print("valor maximo antes de sobel = " + str(numpy.amax(matrix)))
-	for i in range (neighbors, rows-neighbors-1):
-		for j in range (neighbors, columns-neighbors-1):
-			horizontalMatrix[i][j]=numpy.sum(numpy.multiply(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1],sobelRigthKernel[:,:]))
-			verticalMatrix[i][j]=numpy.sum(numpy.multiply(matrix[i-neighbors:i+neighbors+1,j-neighbors:j+neighbors+1],sobelDownKernel[:,:]))
-			newMatrixValues[i][j]=abs(horizontalMatrix[i][j])+abs(verticalMatrix[i][j])
-			#try:
-				#newMatrixAngles[i][j]=math.atan(verticalMatrix[i][j]/horizontalMatrix[i][j])
-			#except ZeroDivisionError:
-				#newMatrixAngles[i][j]=0
+	verticalMatrix = convolutionMirror(matrix, sobelDownKernel)
+	horizontalMatrix = convolutionMirror(matrix, sobelRigthKernel)
+	newMatrixValues=numpy.absolute(verticalMatrix)+numpy.absolute(horizontalMatrix)
+	newMatrixValues=newMatrixValues.astype(numpy.int64)
 	print("valor maximo despues de sobel = " + str(numpy.amax(newMatrixValues)))
 	horizontalMatrix=None
 	verticalMatrix=None
-	umbral=thresholdingOtsu(newMatrixValues)
-	for i in range (len(newMatrixValues)):
-		for j in range (len(newMatrixValues[0])):
-			if newMatrixValues[i][j] > umbral:
-				newMatrixValues[i][j]=0
-			else:
-				newMatrixValues[i][j]=1
+	newMatrixValues=thresholdingOtsu(newMatrixValues)
 	return newMatrixValues, newMatrixAngles
 #Laplacial Filter
 def laplacialFilter(matrix):
@@ -149,12 +136,13 @@ def laplacialFilter(matrix):
 	return newMatrix
 #Crea el histograma de una imagen en formato.dicom
 def createHistogram(matrix):
-	print("Creando histograma \n")
-	dicomTotalPixels = len(matrix)*len(matrix[0])
+	print("Creando histograma")
+	print("Valor maximo gradiente = " + str(numpy.amax(matrix)))
+	#dicomTotalPixels = len(matrix)*len(matrix[0])
 	rows, columns = matrix.shape
 	#histogram=[0]*max(map(max, matrix))+1
 	#histogram=np.zeros(65536)
-	histogram=[0]*(numpy.amax(matrix)+1)
+	histogram=numpy.zeros((numpy.amax(matrix))+1)
 	for i in range (0,rows):
 		for j in range (0, columns):
 			index = matrix[i][j]
@@ -168,15 +156,11 @@ def createHistogram(matrix):
 	#pyplot.plot(histogram)
 	#pyplot.show()
 	return histogram
-def ShowHistogram(dicomImage):
-	dicomPixelArray = dicomImage.pixel_array
+def ShowHistogram(dicomPixelArray):
 	dicomTotalPixels = len(dicomPixelArray)*len(dicomPixelArray[0])
-	try:
-		histogram=[0]*dicomImage.LargestImagePixelValue
-	except AttributeError:
-		histogram=[0]*65536
-	for i in range (0,dicomImage.Rows-1):
-		for j in range (0, dicomImage.Columns-1):
+	histogram=[0]*(numpy.amax(dicomPixelArray)+1)
+	for i in range (0,len(dicomPixelArray)):
+		for j in range (0, len(dicomPixelArray[0])):
 			index = dicomPixelArray[i][j]
 			histogram[index] += 1
 	for i in range (0, len(histogram)):
@@ -186,31 +170,37 @@ def ShowHistogram(dicomImage):
 	pyplot.show()
 def thresholdingOtsu(matrix):
 	print("Calculando umbral \n")
-	totalPixels = len(matrix)*len(matrix[0])
+	totalPixels = matrix.size
+	print(totalPixels)
 	histogram = createHistogram(matrix)
 	print("Histograma creado")
-	sumatory, varBetween, threshold = 0,0,0
+	sumatory, threshold = 0,0
 	sumB, maxt, wB, wF = 0,0,0,0
-	tArray=[]
-	print(len(histogram))
-	for t in range (len(histogram)):
+	for t in range (0,numpy.amax(matrix)):
 		sumatory += t * histogram[t]
-	for t in range (len(histogram)):
+	for t in range (0,numpy.amax(matrix)):
 		wB += histogram[t]
 		if(wB == 0):
 			continue
 		wF = totalPixels - wB
 		if(wF == 0):
 			break
-		sumB += float(t*histogram[t])
+		sumB += t*histogram[t]
 		mB = sumB/wB
 		mF = (sumatory-sumB)/wF
-		varBetween = float(wB)*float(wF)*(mF - mB)*(mF - mB)
-		if(varBetween > maxt):
+		varBetween = wB*wF*(mB - mF)*(mB - mF)
+		if(maxt < varBetween):
 			maxt = varBetween
-			print("t maximo es" + str(t))
 			threshold = t
-	return t
+	print("t maximo es " + str(threshold))
+	row, column = matrix.shape
+	for i in range (0,row):
+		for j in range (0,column):
+			if matrix[i][j] >= threshold:
+				matrix[i][j]=1
+			elif matrix[i][j] < threshold:
+				matrix[i][j]=0
+	return matrix
 #Permite seleccionar el filtro que se desa ejecutar
 def applyFilter(kernel, size, filter, dicomPixelArray):
 	if(filter == "Reduccion"):
