@@ -6,15 +6,16 @@ from tkinter import ttk
 import tkinter.filedialog
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from PIL import Image
 import pydicom
 import numpy
 import math
 import imageFunc
 import copy
 
-fileName = ""
-dicomImage = None
-dicomPixelArray = None
+fileName = "/home/mateo/Documents/Programing/ImageProcessing/prove_images/cameraM.png"
+dicomImage = Image.open(fileName)
+dicomPixelArray = numpy.array(dicomImage.convert(mode='L').getdata()).reshape(dicomImage.size[0], dicomImage.size[1])
 dicomFilteredPixelArray = None
 dicomThresholdingPixelArray = None
 
@@ -23,6 +24,8 @@ def searchImage():
     fileName = tk.filedialog.askopenfilename()
     dicomImage = pydicom.dcmread(fileName)
     dicomPixelArray = dicomImage.pixel_array
+    dicomFilteredPixelArray = None
+    dicomThresholdingPixelArray = None
 
 def showInformation():
     imageInfoLabel['text'] = imageFunc.dicomInfo(dicomImage)
@@ -96,7 +99,7 @@ showImageButton = tk.Button(buttonFrame, text="Show Image", bg="gray30", fg="whi
 showImageButton.pack(padx=5, pady=5)
 showImageInfoButton = tk.Button(buttonFrame, text="Show Image Info", bg="gray30", fg="white", height=2, width=15, command=showInformation)
 showImageInfoButton.pack(padx=5, pady=5)
-showHistogramButton = tk.Button(buttonFrame, text="Show Histogram", bg="gray30", fg="white", height=2, width=15, command = lambda: imageFunc.ShowHistogram(dicomImage))
+showHistogramButton = tk.Button(buttonFrame, text="Show Histogram", bg="gray30", fg="white", height=2, width=15, command = lambda: imageFunc.ShowHistogram(dicomPixelArray))
 showHistogramButton.pack(padx=5, pady=5)
 applyFilterButton = tk.Button(buttonFrame, text="Apply Filter", bg="gray30",fg="white", height=2, width=15, command=applyFilter)
 applyFilterButton.pack(padx=5, pady=5)
