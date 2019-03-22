@@ -6,6 +6,7 @@ import numpy
 import math
 from matplotlib import pyplot, cm
 import createfilters
+import copy
 
 #Recive a dicom file and return the deseable values of the header
 
@@ -110,7 +111,6 @@ def convolutionIgnore(matrix,kernel):
 def sobelFilter(matrix):
 	sobelRigthKernel = numpy.array([[-1,0,1], [-2,0,2], [-1,0,1]])
 	sobelDownKernel = numpy.array([[-1,-2,-1], [0,0,0], [1,2,1]])
-	neighbors = int(math.floor(len(sobelRigthKernel)/2))
 	rows, columns = numpy.shape(matrix)
 	newMatrixValues = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
 	newMatrixAngles = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
@@ -201,6 +201,47 @@ def thresholdingOtsu(matrix):
 			elif matrix[i][j] < threshold:
 				matrix[i][j]=0
 	return matrix
+
+def rgb(a,b,c):
+	return([a,b,c])
+
+def calculateCentroids(matrix, centroids):
+	rows, columns = numpy.shape(matrix)
+	#Se almacenaran los pixeles que correspondan a cada centroide
+	groups = [[] for i in range (len(centroids))]
+	for i in range (0, rows):
+		for j in range (0, columns):
+			distance = list(map(lambda x: abs(x-matrix[i,j]), centroids))
+			minDistaneIndex = distance.index(min(distance))
+			groups[minDistaneIndex].append(matrix[i,j])
+	newCentroids = [0]*len(centroids)
+	for i in range (0, len(centroids)):
+		try:
+			newCentroids[i] = int(round(sum(groups[i])/ len(groups[i])))
+		except(ZeroDivisionError):
+			newCentroids[i] = round(sum(groups[i]))
+	return centroids==newCentroids, newCentroids, groups
+
+def kmeans(matrix, baseCentroids):
+	shouldFinish, newCentroids, groups = calculateCentroids(matrix, baseCentroids)
+	while not shouldFinish:
+		print(newCentroids)
+		shouldFinish, newCentroids, groups = calculateCentroids(matrix, newCentroids)
+	return groups
+
+def kmeansIntoImage (matrix, baseCentroids):
+	colors=[[[0 for _ in range (3)]] for _ in range(len(baseCentroids))]
+	rows, columns = numpy.shape(matrix)
+	groups=kmeans(matrix, baseCentroids)
+	newMatrix=numpy.zeros(shape=(rows, columns, 3))
+	#print(numpy.zeros(shape=(5, 5, 3)))
+	colors=[rgb(0,0,0),rgb(255,255,255),rgb(0,0,255),rgb(255,0,0),rgb(0,255,250),rgb(0,255,0),rgb(255,255,0),
+	rgb(255,0,255)]
+	for i,group in enumerate(groups):
+		for element in group:
+			newMatrix[matrix == element] = colors[i]
+	return newMatrix
+
 #Permite seleccionar el filtro que se desa ejecutar
 def applyFilter(kernel, size, filter, dicomPixelArray):
 	if(filter == "Reduccion"):
