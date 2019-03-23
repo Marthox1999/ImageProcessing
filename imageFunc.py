@@ -211,13 +211,13 @@ def calculateCentroids(matrix, centroids):
 	groups = [[] for i in range (len(centroids))]
 	for i in range (0, rows):
 		for j in range (0, columns):
-			distance = list(map(lambda x: abs(x-matrix[i,j]), centroids))
+			distance = list(map(lambda x: numpy.absolute(x-matrix[i,j]), centroids))
 			minDistaneIndex = distance.index(min(distance))
 			groups[minDistaneIndex].append(matrix[i,j])
 	newCentroids = [0]*len(centroids)
 	for i in range (0, len(centroids)):
 		try:
-			newCentroids[i] = int(round(sum(groups[i])/ len(groups[i])))
+			newCentroids[i] = int(round(numpy.sum(groups[i])/ len(groups[i])))
 		except(ZeroDivisionError):
 			newCentroids[i] = round(sum(groups[i]))
 	return centroids==newCentroids, newCentroids, groups
@@ -230,17 +230,16 @@ def kmeans(matrix, baseCentroids):
 	return groups
 
 def kmeansIntoImage (matrix, baseCentroids):
-	colors=[[[0 for _ in range (3)]] for _ in range(len(baseCentroids))]
 	rows, columns = numpy.shape(matrix)
 	groups=kmeans(matrix, baseCentroids)
 	newMatrix=numpy.zeros(shape=(rows, columns, 3))
 	#print(numpy.zeros(shape=(5, 5, 3)))
-	colors=[rgb(0,0,0),rgb(255,255,255),rgb(0,0,255),rgb(255,0,0),rgb(0,255,250),rgb(0,255,0),rgb(255,255,0),
-	rgb(255,0,255)]
+	colors=[rgb(0,0,0),rgb(255,255,255),rgb(0,0,255),rgb(0,255,250),rgb(255,0,0),
+	rgb(0,255,0),rgb(255,255,0),rgb(255,0,255)]
 	for i,group in enumerate(groups):
 		for element in group:
 			newMatrix[matrix == element] = colors[i]
-	return newMatrix
+	return newMatrix 
 
 #Permite seleccionar el filtro que se desa ejecutar
 def applyFilter(kernel, size, filter, dicomPixelArray):
