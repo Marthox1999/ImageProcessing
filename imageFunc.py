@@ -206,39 +206,45 @@ def rgb(a,b,c):
 	return([a,b,c])
 
 def calculateCentroids(matrix, centroids):
+	print("Calculando Centroides")
 	rows, columns = numpy.shape(matrix)
 	#Se almacenaran los pixeles que correspondan a cada centroide
 	groups = [[] for i in range (len(centroids))]
+	paintGroups = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
 	for i in range (0, rows):
 		for j in range (0, columns):
 			distance = list(map(lambda x: numpy.absolute(x-matrix[i,j]), centroids))
 			minDistaneIndex = distance.index(min(distance))
 			groups[minDistaneIndex].append(matrix[i,j])
+			paintGroups[i][j]=minDistaneIndex
 	newCentroids = [0]*len(centroids)
 	for i in range (0, len(centroids)):
 		try:
 			newCentroids[i] = int(round(numpy.sum(groups[i])/ len(groups[i])))
 		except(ZeroDivisionError):
-			newCentroids[i] = round(sum(groups[i]))
-	return centroids==newCentroids, newCentroids, groups
+			newCentroids[i] = int(round(sum(groups[i])))
+	return centroids==newCentroids, newCentroids, paintGroups
 
 def kmeans(matrix, baseCentroids):
-	shouldFinish, newCentroids, groups = calculateCentroids(matrix, baseCentroids)
+	print("Empezo K-means")
+	shouldFinish, newCentroids, paintGroups = calculateCentroids(matrix, baseCentroids)
 	while not shouldFinish:
+		shouldFinish, newCentroids, paintGroups = calculateCentroids(matrix, newCentroids)
 		print(newCentroids)
-		shouldFinish, newCentroids, groups = calculateCentroids(matrix, newCentroids)
-	return groups
+	return newCentroids, paintGroups
 
 def kmeansIntoImage (matrix, baseCentroids):
 	rows, columns = numpy.shape(matrix)
-	groups=kmeans(matrix, baseCentroids)
+	newCentroids, paintGroups=kmeans(matrix, baseCentroids)
 	newMatrix=numpy.zeros(shape=(rows, columns, 3))
-	#print(numpy.zeros(shape=(5, 5, 3)))
 	colors=[rgb(0,0,0),rgb(255,255,255),rgb(0,0,255),rgb(0,255,250),rgb(255,0,0),
 	rgb(0,255,0),rgb(255,255,0),rgb(255,0,255)]
-	for i,group in enumerate(groups):
-		for element in group:
-			newMatrix[matrix == element] = colors[i]
+	print("Pintando Imagen")
+	for i in range(rows):
+		for j in range(columns):
+			for k in range (len(newCentroids)):
+				if(paintGroups[i][j]==newCentroids.index(newCentroids[k])):
+					newMatrix[i][j]=colors[k]
 	return newMatrix 
 
 #Permite seleccionar el filtro que se desa ejecutar

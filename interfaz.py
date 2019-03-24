@@ -58,8 +58,9 @@ def kmeans():
         centroids = "10 20 30"
     for i in range (len(centroids.split())):
         intCentroids.append(int(centroids.split()[i]))
-    if(dicomFilteredPixelArray is None):
-        dicomKmeansPixelArray = copy.copy(imageFunc.kmeansIntoImage(dicomPixelArray, intCentroids))
+    print(dicomFilteredPixelArray is None)
+    if(dicomFilteredPixelArray is not None):
+        dicomKmeansPixelArray = copy.copy(imageFunc.kmeansIntoImage(dicomFilteredPixelArray, intCentroids))
     else:
         dicomKmeansPixelArray = copy.copy(imageFunc.kmeansIntoImage(dicomPixelArray, intCentroids))
     showKmeansImage()
@@ -69,7 +70,7 @@ def showImage():
         widget.destroy()
     figure = plt.Figure()
     subPlot = figure.add_subplot(111)
-    subPlot.imshow(dicomPixelArray, cmap=plt.cm.get_cmap("Greys"))
+    subPlot.imshow(dicomPixelArray, cmap=plt.cm.gray)
     imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
     imagesTemp.draw()
     imagesTemp.get_tk_widget().pack(padx=5, pady=15)
@@ -79,7 +80,7 @@ def showFilteredImage():
         widget.destroy()
     figure = plt.Figure()
     subPlot = figure.add_subplot(111)
-    subPlot.imshow(dicomFilteredPixelArray, cmap=plt.cm.get_cmap("Greys"))
+    subPlot.imshow(dicomFilteredPixelArray, cmap=plt.cm.gray)
     imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
     imagesTemp.draw()
     imagesTemp.get_tk_widget().pack(padx=5, pady=15)
@@ -89,7 +90,7 @@ def showThresholdImage():
         widget.destroy()
     figure = plt.Figure()
     subPlot = figure.add_subplot(111)
-    subPlot.imshow(dicomThresholdingPixelArray, cmap=plt.cm.get_cmap("Greys"))
+    subPlot.imshow(dicomThresholdingPixelArray, cmap=plt.cm.gray)
     imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
     imagesTemp.draw()
     imagesTemp.get_tk_widget().pack(padx=5, pady=15)
