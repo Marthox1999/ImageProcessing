@@ -201,6 +201,62 @@ def thresholdingOtsu(matrix):
 			elif matrix[i][j] < threshold:
 				matrix[i][j]=0
 	return matrix
+def dilatation(matrix, struct):
+    neighbor = math.floor(int(len(struct))/2)
+    rowO, columnO=matrix.shape
+    row, column = struct.shape
+    newImage = numpy.zeros((rowO,columnO))
+    change = numpy.zeros((row,column))
+    for i in range (neighbor,rowO-neighbor):
+        for j in range (neighbor,columnO-neighbor):
+            firsti = i - neighbor
+            firstj = j - neighbor  
+            endi = i + neighbor + 1
+            endj = j + neighbor + 1
+            #erosion    
+            if ( not numpy.array_equiv(matrix[firsti:endi,firstj:endj], struct[:,:])):
+                #pero debo tener en cuenta si en la nueva ya ahi unos marcados en ese sector
+                if (numpy.sum(newImage[firsti:endi,firstj:endj]) == 0):
+                    newImage[firsti:endi,firstj:endj] = change[:,:]
+            else:
+                #no debo quitar marcas realizadas
+                newImage[i,j] = 1
+    return newImage
+
+def erosion(matrix, struct):
+    neighbor = math.floor(int(len(struct))/2)
+    rowO, columnO = matrix.shape
+    row, column = struct.shape
+    newImage = numpy.zeros((rowO,columnO))
+    change = numpy.ones((row,column))
+    for i in range (neighbor,rowO-neighbor):
+        for j in range (neighbor,columnO-neighbor):
+            firsti = i - neighbor
+            firstj = j - neighbor  
+            endi = i + neighbor + 1
+            endj = j + neighbor + 1
+            #dilatation   
+            # se esta suponiendo origen centro debo tener en cuenta opcion de centro 
+            if ( matrix[i,j] == 1 ):
+                newImage[firsti:endi,firstj:endj] = change[:,:]
+    return newImage
+
+def dilatacionErosion(matrix, struct):
+	newMatrix = copy.copy(matrix)
+	newMatrix = thresholdingOtsu(newMatrix)
+	matrixStruct = numpy.array([[0]*3]*3)
+	if(struct == "+"):
+		matrixStruct=structarray[0]
+	elif(struct == "x"):
+		matrixStruct=structarray[1]
+	elif(struct == "-"):
+		matrixStruct=structarray[2]
+	elif(struct == "|"):
+		matrixStruct=structarray[3]
+	elif(struct == "□"):
+		matrixStruct=structarray[4]
+	result =dilatation(newMatrix, matrixStruct)-erosion(newMatrix, matrixStruct)
+	return (result)
 
 def rgb(a,b,c):
 	return([a,b,c])
@@ -399,3 +455,11 @@ kernelarray = [
 	[rayleighKernel3x3,rayleighKernel5x5,None], #posicion 2 tamaños kernel Rayleigh
 	[None, None, None], #posicion 3 tamaños kernel Mediano (comming soon)
 	]
+
+structarray=[
+	numpy.array([[0,1,0],[1,1,1],[0,1,0]]),
+	numpy.array([[1,0,1],[0,1,0],[1,0,1]]),
+	numpy.array([[0,0,0],[1,1,1],[0,0,0]]),
+	numpy.array([[0,1,0],[0,1,0],[0,1,0]]),
+	numpy.array([[1,1,1],[1,1,1],[1,1,1]])
+]

@@ -48,6 +48,16 @@ def thresholding():
         dicomThresholdingPixelArray,dicomAnglesMatrix=copy.copy(imageFunc.sobelFilter(dicomFilteredPixelArray))
     showThresholdImage()
 
+def thresholdingErosion():
+    global dicomThresholdingErosionPixelArray
+    struct = selectStruct.get()
+    print(dicomFilteredPixelArray is None)
+    if(dicomFilteredPixelArray is None):
+        dicomThresholdingErosionPixelArray = copy.copy(imageFunc.dilatacionErosion(dicomPixelArray, struct))
+    else:
+        dicomThresholdingErosionPixelArray = copy.copy(imageFunc.dilatacionErosion(dicomFilteredPixelArray, struct))
+    showThresholdErosionImage()
+
 def kmeans():
     global dicomKmeansPixelArray
     centroids = centroidsText.get("1.0", tk.END)
@@ -95,6 +105,16 @@ def showThresholdImage():
     imagesTemp.draw()
     imagesTemp.get_tk_widget().pack(padx=5, pady=15)
 
+def showThresholdErosionImage():
+    for widget in imageFrame.winfo_children():
+        widget.destroy()
+    figure = plt.Figure()
+    subPlot = figure.add_subplot(111)
+    subPlot.imshow(dicomThresholdingErosionPixelArray, cmap=plt.cm.gray)
+    imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
+    imagesTemp.draw()
+    imagesTemp.get_tk_widget().pack(padx=5, pady=15)
+
 def showKmeansImage():
     for widget in imageFrame.winfo_children():
         widget.destroy()
@@ -107,6 +127,7 @@ def showKmeansImage():
 
 filterList=["Sin Filtro","Reduccion","Ignorar","Espejo"]
 kernelList=["Promedio","Gaussiano","Rayleigh","Mediano"]
+structList=["□","+", "x", "-", "|"]
 kernelSize=["3x3","5x5","7x7"]
 
 root = tk.Tk()
@@ -135,15 +156,22 @@ applyBordersButton.pack(padx=5, pady=5)
 selectFilterLabel = tk.Label(buttonFrame, text="Seleccione un filtro", bg="black", fg="white")
 kmeansButton = tk.Button(buttonFrame, text="K-Means", bg="gray30",fg="white", height=1, width=15, command=kmeans)
 kmeansButton.pack(padx=5, pady=5)
+ErosionAndDilatataionButton = tk.Button(buttonFrame, text="Erosion y Dilatacion", bg="gray30",fg="white", height=1, width=15, command=thresholdingErosion)
+ErosionAndDilatataionButton.pack(padx=5, pady=5)
 centroidsLabel = tk.Label(buttonFrame, text="Ingrese los centroides", bg="black", fg="white")
 centroidsLabel.pack(padx=5, pady=5)
-centroidsText = tk.Text(buttonFrame, height=2, width=17)
+centroidsText = tk.Text(buttonFrame, height=1, width=15)
 centroidsText.pack(padx=5, pady=5)
 centroidsText.insert(tk.END, "c1 c2 ... cn")
 selectFilterLabel.pack(padx=5, pady=5)
-selectFilterCBox = ttk.Combobox(buttonFrame, values=filterList, state="readonly")
+selectFilterCBox = ttk.Combobox(buttonFrame, values=filterList, state="readonly", width=10)
 selectFilterCBox.current(0)
 selectFilterCBox.pack(padx=5, pady=5)
+selectKernelLabel = tk.Label(buttonFrame, text="Seleccione una estructura", bg="black", fg="white")
+selectKernelLabel.pack(padx=5, pady=5)
+selectStruct = ttk.Combobox(buttonFrame, values=structList, state="readonly", width=3)
+selectStruct.current(0)
+selectStruct.pack(padx=5, pady=5)
 selectKernelLabel = tk.Label(buttonFrame, text="Seleccione un kernel", bg="black", fg="white")
 selectKernelLabel.pack(padx=5, pady=5)
 selectKernelCBox = ttk.Combobox(buttonFrame, values=kernelList, state="readonly", width=12)
