@@ -1,0 +1,1 @@
+newCentroids[i] = 10

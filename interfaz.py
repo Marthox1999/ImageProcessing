@@ -20,7 +20,7 @@ dicomFilteredPixelArray = None
 dicomThresholdingPixelArray = None
 
 def searchImage():
-    global fileName, dicomImage, dicomPixelArray
+    global fileName, dicomImage, dicomPixelArray, dicomFilteredPixelArray, dicomThresholdingPixelArray
     fileName = tk.filedialog.askopenfilename()
     dicomImage = pydicom.dcmread(fileName)
     dicomPixelArray = dicomImage.pixel_array
@@ -47,6 +47,33 @@ def thresholding():
     else:
         dicomThresholdingPixelArray,dicomAnglesMatrix=copy.copy(imageFunc.sobelFilter(dicomFilteredPixelArray))
     showThresholdImage()
+
+def thresholdingErosion():
+    global dicomThresholdingErosionPixelArray
+    struct = selectStruct.get()
+    print(dicomFilteredPixelArray is None)
+    if(dicomFilteredPixelArray is None):
+        dicomThresholdingErosionPixelArray = copy.copy(imageFunc.dilatacionErosion(dicomPixelArray, struct))
+    else:
+        dicomThresholdingErosionPixelArray = copy.copy(imageFunc.dilatacionErosion(dicomFilteredPixelArray, struct))
+    showThresholdErosionImage()
+
+def kmeans():
+    global dicomKmeansPixelArray
+    centroids = centroidsText.get("1.0", tk.END)
+    intCentroids = []
+    try:
+        int(centroids.split()[0])
+    except ValueError:
+        centroids = "10 20 30"
+    for i in range (len(centroids.split())):
+        intCentroids.append(int(centroids.split()[i]))
+    print(dicomFilteredPixelArray is None)
+    if(dicomFilteredPixelArray is not None):
+        dicomKmeansPixelArray = copy.copy(imageFunc.kmeansIntoImage(dicomFilteredPixelArray, intCentroids))
+    else:
+        dicomKmeansPixelArray = copy.copy(imageFunc.kmeansIntoImage(dicomPixelArray, intCentroids))
+    showKmeansImage()
 
 def showImage():
     for widget in imageFrame.winfo_children():
@@ -78,14 +105,35 @@ def showThresholdImage():
     imagesTemp.draw()
     imagesTemp.get_tk_widget().pack(padx=5, pady=15)
 
+def showThresholdErosionImage():
+    for widget in imageFrame.winfo_children():
+        widget.destroy()
+    figure = plt.Figure()
+    subPlot = figure.add_subplot(111)
+    subPlot.imshow(dicomThresholdingErosionPixelArray, cmap=plt.cm.gray)
+    imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
+    imagesTemp.draw()
+    imagesTemp.get_tk_widget().pack(padx=5, pady=15)
+
+def showKmeansImage():
+    for widget in imageFrame.winfo_children():
+        widget.destroy()
+    figure = plt.Figure()
+    subPlot = figure.add_subplot(111)
+    subPlot.imshow(dicomKmeansPixelArray, cmap=plt.cm.get_cmap("Greys"))
+    imagesTemp = FigureCanvasTkAgg(figure, master=imageFrame)
+    imagesTemp.draw()
+    imagesTemp.get_tk_widget().pack(padx=5, pady=15)
+
 filterList=["Sin Filtro","Reduccion","Ignorar","Espejo"]
 kernelList=["Promedio","Gaussiano","Rayleigh","Mediano"]
+structList=["□","+", "x", "-", "|"]
 kernelSize=["3x3","5x5","7x7"]
 
 root = tk.Tk()
 root.title("Procesamiento de imagenes")
 root.configure(bg="black")
-root.geometry("1000x500")
+root.geometry("1000x600")
 root.resizable(0,0)
 
 imageInfoFrame = tk.Frame(root, bg="black")
@@ -93,23 +141,37 @@ imageInfoFrame.pack(side=tk.LEFT, padx= 10, pady=10)
 buttonFrame = tk.Frame(root, bg="black")
 buttonFrame.pack(side=tk.RIGHT, padx=10, pady=10)
 
-searchImageButton = tk.Button(buttonFrame, text="Search Image", bg="gray30", fg="white", height=2, width=15, command=searchImage)
+searchImageButton = tk.Button(buttonFrame, text="Search Image", bg="gray30", fg="white", height=1, width=15, command=searchImage)
 searchImageButton.pack(padx=5, pady=5)
-showImageButton = tk.Button(buttonFrame, text="Show Image", bg="gray30", fg="white", height=2, width=15, command=showImage)
+showImageButton = tk.Button(buttonFrame, text="Show Image", bg="gray30", fg="white", height=1, width=15, command=showImage)
 showImageButton.pack(padx=5, pady=5)
-showImageInfoButton = tk.Button(buttonFrame, text="Show Image Info", bg="gray30", fg="white", height=2, width=15, command=showInformation)
+showImageInfoButton = tk.Button(buttonFrame, text="Show Image Info", bg="gray30", fg="white", height=1, width=15, command=showInformation)
 showImageInfoButton.pack(padx=5, pady=5)
-showHistogramButton = tk.Button(buttonFrame, text="Show Histogram", bg="gray30", fg="white", height=2, width=15, command = lambda: imageFunc.ShowHistogram(dicomPixelArray))
+showHistogramButton = tk.Button(buttonFrame, text="Show Histogram", bg="gray30", fg="white", height=1, width=15, command = lambda: imageFunc.ShowHistogram(dicomPixelArray))
 showHistogramButton.pack(padx=5, pady=5)
-applyFilterButton = tk.Button(buttonFrame, text="Apply Filter", bg="gray30",fg="white", height=2, width=15, command=applyFilter)
+applyFilterButton = tk.Button(buttonFrame, text="Apply Filter", bg="gray30",fg="white", height=1, width=15, command=applyFilter)
 applyFilterButton.pack(padx=5, pady=5)
-applyBordersButton = tk.Button(buttonFrame, text="Thresholding", bg="gray30",fg="white", height=2, width=15, command=thresholding)
+applyBordersButton = tk.Button(buttonFrame, text="Thresholding", bg="gray30",fg="white", height=1, width=15, command=thresholding)
 applyBordersButton.pack(padx=5, pady=5)
 selectFilterLabel = tk.Label(buttonFrame, text="Seleccione un filtro", bg="black", fg="white")
+kmeansButton = tk.Button(buttonFrame, text="K-Means", bg="gray30",fg="white", height=1, width=15, command=kmeans)
+kmeansButton.pack(padx=5, pady=5)
+ErosionAndDilatataionButton = tk.Button(buttonFrame, text="Erosion y Dilatacion", bg="gray30",fg="white", height=1, width=15, command=thresholdingErosion)
+ErosionAndDilatataionButton.pack(padx=5, pady=5)
+centroidsLabel = tk.Label(buttonFrame, text="Ingrese los centroides", bg="black", fg="white")
+centroidsLabel.pack(padx=5, pady=5)
+centroidsText = tk.Text(buttonFrame, height=1, width=15)
+centroidsText.pack(padx=5, pady=5)
+centroidsText.insert(tk.END, "c1 c2 ... cn")
 selectFilterLabel.pack(padx=5, pady=5)
-selectFilterCBox = ttk.Combobox(buttonFrame, values=filterList, state="readonly")
+selectFilterCBox = ttk.Combobox(buttonFrame, values=filterList, state="readonly", width=10)
 selectFilterCBox.current(0)
 selectFilterCBox.pack(padx=5, pady=5)
+selectKernelLabel = tk.Label(buttonFrame, text="Seleccione una estructura", bg="black", fg="white")
+selectKernelLabel.pack(padx=5, pady=5)
+selectStruct = ttk.Combobox(buttonFrame, values=structList, state="readonly", width=3)
+selectStruct.current(0)
+selectStruct.pack(padx=5, pady=5)
 selectKernelLabel = tk.Label(buttonFrame, text="Seleccione un kernel", bg="black", fg="white")
 selectKernelLabel.pack(padx=5, pady=5)
 selectKernelCBox = ttk.Combobox(buttonFrame, values=kernelList, state="readonly", width=12)

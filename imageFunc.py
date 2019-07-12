@@ -6,6 +6,7 @@ import numpy
 import math
 from matplotlib import pyplot, cm
 import createfilters
+import copy
 
 #Recive a dicom file and return the deseable values of the header
 
@@ -110,7 +111,6 @@ def convolutionIgnore(matrix,kernel):
 def sobelFilter(matrix):
 	sobelRigthKernel = numpy.array([[-1,0,1], [-2,0,2], [-1,0,1]])
 	sobelDownKernel = numpy.array([[-1,-2,-1], [0,0,0], [1,2,1]])
-	neighbors = int(math.floor(len(sobelRigthKernel)/2))
 	rows, columns = numpy.shape(matrix)
 	newMatrixValues = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
 	newMatrixAngles = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
@@ -201,6 +201,108 @@ def thresholdingOtsu(matrix):
 			elif matrix[i][j] < threshold:
 				matrix[i][j]=0
 	return matrix
+def dilatation(matrix, struct):
+    neighbor = math.floor(int(len(struct))/2)
+    rowO, columnO=matrix.shape
+    row, column = struct.shape
+    newImage = numpy.zeros((rowO,columnO))
+    change = numpy.zeros((row,column))
+    for i in range (neighbor,rowO-neighbor):
+        for j in range (neighbor,columnO-neighbor):
+            firsti = i - neighbor
+            firstj = j - neighbor  
+            endi = i + neighbor + 1
+            endj = j + neighbor + 1
+            #erosion    
+            if ( not numpy.array_equiv(matrix[firsti:endi,firstj:endj], struct[:,:])):
+                #pero debo tener en cuenta si en la nueva ya ahi unos marcados en ese sector
+                if (numpy.sum(newImage[firsti:endi,firstj:endj]) == 0):
+                    newImage[firsti:endi,firstj:endj] = change[:,:]
+            else:
+                #no debo quitar marcas realizadas
+                newImage[i,j] = 1
+    return newImage
+
+def erosion(matrix, struct):
+    neighbor = math.floor(int(len(struct))/2)
+    rowO, columnO = matrix.shape
+    row, column = struct.shape
+    newImage = numpy.zeros((rowO,columnO))
+    change = numpy.ones((row,column))
+    for i in range (neighbor,rowO-neighbor):
+        for j in range (neighbor,columnO-neighbor):
+            firsti = i - neighbor
+            firstj = j - neighbor  
+            endi = i + neighbor + 1
+            endj = j + neighbor + 1
+            #dilatation   
+            # se esta suponiendo origen centro debo tener en cuenta opcion de centro 
+            if ( matrix[i,j] == 1 ):
+                newImage[firsti:endi,firstj:endj] = change[:,:]
+    return newImage
+
+def dilatacionErosion(matrix, struct):
+	newMatrix = copy.copy(matrix)
+	newMatrix = thresholdingOtsu(newMatrix)
+	matrixStruct = numpy.array([[0]*3]*3)
+	if(struct == "+"):
+		matrixStruct=structarray[0]
+	elif(struct == "x"):
+		matrixStruct=structarray[1]
+	elif(struct == "-"):
+		matrixStruct=structarray[2]
+	elif(struct == "|"):
+		matrixStruct=structarray[3]
+	elif(struct == "□"):
+		matrixStruct=structarray[4]
+	result =dilatation(newMatrix, matrixStruct)-erosion(newMatrix, matrixStruct)
+	return (result)
+
+def rgb(a,b,c):
+	return([a,b,c])
+
+def calculateCentroids(matrix, centroids):
+	print("Calculando Centroides")
+	rows, columns = numpy.shape(matrix)
+	#Se almacenaran los pixeles que correspondan a cada centroide
+	groups = [[] for i in range (len(centroids))]
+	paintGroups = numpy.array([[0 for _ in range (columns)] for _ in range (rows)])
+	for i in range (0, rows):
+		for j in range (0, columns):
+			distance = list(map(lambda x: numpy.absolute(x-matrix[i,j]), centroids))
+			minDistaneIndex = distance.index(min(distance))
+			groups[minDistaneIndex].append(matrix[i,j])
+			paintGroups[i][j]=minDistaneIndex
+	newCentroids = [0]*len(centroids)
+	for i in range (0, len(centroids)):
+		try:
+			newCentroids[i] = int(round(numpy.sum(groups[i])/ len(groups[i])))
+		except(ZeroDivisionError):
+			newCentroids[i] = int(round(sum(groups[i])))
+	return centroids==newCentroids, newCentroids, paintGroups
+
+def kmeans(matrix, baseCentroids):
+	print("Empezo K-means")
+	shouldFinish, newCentroids, paintGroups = calculateCentroids(matrix, baseCentroids)
+	while not shouldFinish:
+		shouldFinish, newCentroids, paintGroups = calculateCentroids(matrix, newCentroids)
+		print(newCentroids)
+	return newCentroids, paintGroups
+
+def kmeansIntoImage (matrix, baseCentroids):
+	rows, columns = numpy.shape(matrix)
+	newCentroids, paintGroups=kmeans(matrix, baseCentroids)
+	newMatrix=numpy.zeros(shape=(rows, columns, 3))
+	colors=[rgb(0,0,0),rgb(255,255,255),rgb(0,0,255),rgb(0,255,250),rgb(255,0,0),
+	rgb(0,255,0),rgb(255,255,0),rgb(255,0,255)]
+	print("Pintando Imagen")
+	for i in range(rows):
+		for j in range(columns):
+			for k in range (len(newCentroids)):
+				if(paintGroups[i][j]==newCentroids.index(newCentroids[k])):
+					newMatrix[i][j]=colors[k]
+	return newMatrix 
+
 #Permite seleccionar el filtro que se desa ejecutar
 def applyFilter(kernel, size, filter, dicomPixelArray):
 	if(filter == "Reduccion"):
@@ -353,3 +455,11 @@ kernelarray = [
 	[rayleighKernel3x3,rayleighKernel5x5,None], #posicion 2 tamaños kernel Rayleigh
 	[None, None, None], #posicion 3 tamaños kernel Mediano (comming soon)
 	]
+
+structarray=[
+	numpy.array([[0,1,0],[1,1,1],[0,1,0]]),
+	numpy.array([[1,0,1],[0,1,0],[1,0,1]]),
+	numpy.array([[0,0,0],[1,1,1],[0,0,0]]),
+	numpy.array([[0,1,0],[0,1,0],[0,1,0]]),
+	numpy.array([[1,1,1],[1,1,1],[1,1,1]])
+]
